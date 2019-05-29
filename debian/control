@@ -1,0 +1,13 @@
+Source: icecloud
+Section: utils
+Priority: optional
+Maintainer: David Villa Alises <David.Villa@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), python3-all, python3-zeroc-ice
+Standards-Version: 4.3.0
+
+Package: icecloud
+Architecture: all
+Depends: ${misc:Depends}, python3-all, python3, python3-zeroc-ice
+Description: Generic IceGrid Server Template instantiator
+ a generic IceGrid Server Template factory to instantiate servers on demand
+ from script or third-party services.

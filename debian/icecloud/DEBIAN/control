@@ -1,0 +1,11 @@
+Package: icecloud
+Version: 0.20190529-1
+Architecture: all
+Maintainer: David Villa Alises <David.Villa@gmail.com>
+Installed-Size: 20
+Depends: python3-all, python3, python3-zeroc-ice
+Section: utils
+Priority: optional
+Description: Generic IceGrid Server Template instantiator
+ a generic IceGrid Server Template factory to instantiate servers on demand
+ from script or third-party services.

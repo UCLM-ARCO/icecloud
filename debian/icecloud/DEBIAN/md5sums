@@ -1,0 +1,4 @@
+4ee9c1aa26ff9dc2b7b8a88d9493155d  usr/bin/icecloud-server-factory
+81244fc17488a9dee07317ce03128ebe  usr/share/doc/icecloud/changelog.Debian.gz
+bf8273bcc88693946544f9e8a602e482  usr/share/doc/icecloud/copyright
+4ed961a1474f188965f526ce74823781  usr/share/ice/slice/IceCloud/ServerFactory.ice
