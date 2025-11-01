@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/env -S python3 -u
 
 import sys
 import Ice
@@ -23,6 +22,8 @@ class Client(Ice.Application):
         printer.write('Hello World!')
         print('ok')
 
+        return 0
+
     def retry_cast(self, cast, proxy):
         for i in range(5):
             try:
@@ -31,8 +32,6 @@ class Client(Ice.Application):
             except Ice.ObjectNotExistException:
                 print('.', end='')
                 time.sleep(0.5)
-            else:
-                raise Exception("Object '{}' not available".format(proxy))
 
         if not retval:
             raise RuntimeError("Invalid proxy: '{}'".format(proxy))

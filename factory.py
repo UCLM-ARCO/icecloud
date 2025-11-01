@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-# -*- coding:utf-8; mode:python -*-
+#!/usr/bin/env -S python3 -u
 
 import os
 import sys
@@ -33,12 +32,12 @@ class NodeObserverI(NodeObserver):
         if updated_info.state in [ServerState.Inactive, ServerState.Destroyed]:
             self.factory.remove_server(updated_info.id)
 
+    def nodeInit(self, node, current):
+        print("nodeInit called", node)
+
     def nodeDown(self, node_name, current):
         print("node {} down".format(node_name))
         sys.stdout.flush()
-
-    def nodeInit(self, node, current):
-        print("nodeInit called", node)
 
     def updateAdapter(self, node, adapter, current):
         print("updateAdapter called", node, adapter)
@@ -59,9 +58,11 @@ class KeepAliveThread(threading.Thread):
 class FactoryI(IceCloud.ServerFactory):
     def __init__(self, admin_session, app):
         self.admin_session = admin_session
+        print("app =", app)
         self.app = app
 
     def make(self, node, server_template, params, current):
+        print("node =", node)
         if node not in self.admin.getAllNodeNames():
             raise IceCloud.CreationError("Node '{}' is not defined in application '{}'.".format(node, self.app))
 
@@ -90,24 +91,26 @@ class FactoryI(IceCloud.ServerFactory):
     def admin(self):
         return self.admin_session.getAdmin()
 
-    @property
-    @lru_cache(None)
-    def server_templates(self):
-        return self.admin.getApplicationInfo(self.app).descriptor.serverTemplates
+    def get_direct_proxy(self, template, server_name):
+        print("template =", template)
+        adapter_name = self.get_server_template_adapter_name(template)
+        print("adapter_name =", adapter_name)
+        adapters = self.admin.getAdapterInfo(f'{server_name}.{adapter_name}')
+        if not adapters:
+            return None
+
+        dummy_prx = adapters[0].proxy
+        return dummy_prx.ice_identity(Ice.stringToIdentity(server_name))
 
     def get_server_template_adapter_name(self, template):
         template_descriptor = self.server_templates[template]
         adapter_name = template_descriptor.descriptor.adapters[0].name
         return adapter_name
 
-    def get_direct_proxy(self, template, server_name):
-        adapter_name = self.get_server_template_adapter_name(template)
-        adapters = self.admin.getAdapterInfo('{}.{}'.format(server_name, adapter_name))
-        if not adapters:
-            return None
-
-        dummy_prx = adapters[0].proxy
-        return dummy_prx.ice_identity(Ice.stringToIdentity(server_name))
+    @property
+    @lru_cache(None)
+    def server_templates(self):
+        return self.admin.getApplicationInfo(self.app).descriptor.serverTemplates
 
     def create_server(self, node, template, params):
         server_instance_desc = ServerInstanceDescriptor()
@@ -133,16 +136,14 @@ class FactoryI(IceCloud.ServerFactory):
 class FactoryServer(Ice.Application):
     def run(self, argv):
         self.broker = self.communicator()
+        self.properties = self.broker.getProperties()
+
         self.adapter = self.broker.createObjectAdapter('IceCloud.ServerFactory.Adapter')
         self.adapter.activate()
 
-        self.properties = self.broker.getProperties()
-
-        self.servant = FactoryI(
-            self.admin_session,
-            self.get_application())
-
-        print(self. adapter.add(self.servant, self.get_factory_identity()))
+        self.servant = FactoryI(self.admin_session, self.get_application())
+        proxy = self.adapter.add(self.servant, self.get_factory_identity())
+        print(proxy)
 
         self.set_node_observer()
         self.keep_session()
@@ -158,7 +159,8 @@ class FactoryServer(Ice.Application):
         user = self.properties.getProperty('user')
         pwd = self.properties.getProperty('pwd')
 
-        registry = LocatorPrx.checkedCast(self.communicator().getDefaultLocator()).getLocalRegistry()
+        registry = LocatorPrx.checkedCast(
+            self.communicator().getDefaultLocator()).getLocalRegistry()
         return registry.createAdminSession(user, pwd)
 
     def get_application(self):
